@@ -1,0 +1,6 @@
+{
+  "appId": "com.sonujeet.platform0",
+  "appName": "Platform 0",
+  "webDir": "www",
+  "android": { "allowMixedContent": false, "backgroundColor": "#000000", "webContentsDebuggingEnabled": false }
+}

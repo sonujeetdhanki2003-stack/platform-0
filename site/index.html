@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>PLATFORM 0 — an Indian railway anomaly horror game</title>
+<meta name="description" content="A 25-minute anomaly horror game in 3 chapters: a late-night Indian railway platform, the subway beneath it, and the last local train. Spot what's wrong. Turn back.">
+<meta property="og:title" content="PLATFORM 0 — 3 chapters of Indian railway horror">
+<meta property="og:description" content="Spot the anomaly. Turn back. Platform, subway, last local. A ~25 minute horror game with a twist ending.">
+<meta property="og:image" content="https://platform-0-v3.sites.tab.bot/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="icon.png">
+<link rel="preload" href="fonts/noto-deva-devanagari.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:#e9e4d4;font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#game{position:fixed;inset:0;display:block}
+#game.retro{image-rendering:pixelated;image-rendering:crisp-edges}
+#grain{position:fixed;inset:0;width:100%;height:100%;opacity:.09;mix-blend-mode:overlay;pointer-events:none;image-rendering:pixelated}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,.55) 80%,rgba(0,0,0,.9) 100%)}
+#scan{position:fixed;inset:0;pointer-events:none;opacity:.12;background:repeating-linear-gradient(0deg,rgba(0,0,0,.6) 0 1px,transparent 1px 3px)}
+#fade{position:fixed;inset:0;background:#000;opacity:1;pointer-events:none;transition:opacity 1s}
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px}
+.screen.on{display:flex}
+#title{background:linear-gradient(90deg,rgba(0,0,0,.82),rgba(0,0,0,.35) 60%,rgba(0,0,0,.1));align-items:flex-start;padding-left:7vw}
+.logo{font-weight:900;letter-spacing:.04em;line-height:.85;white-space:nowrap;font-size:min(12vw,120px,15vh);color:#f2c613;text-shadow:0 0 18px rgba(242,198,19,.35),4px 4px 0 #000;margin:0}
+.logo span{display:block;font-size:.42em;letter-spacing:.32em;color:#e9e4d4;text-shadow:2px 2px 0 #000}
+.tag{margin:14px 0 22px;font-size:min(4.4vw,19px);opacity:.85;max-width:520px;text-align:left}
+.btn{display:block;min-width:240px;margin:7px 0;padding:13px 22px;font:700 20px/1 sans-serif;font-family:inherit;letter-spacing:.16em;text-transform:uppercase;color:#111;background:#f2c613;border:0;border-radius:2px;cursor:pointer;box-shadow:4px 4px 0 #000}
+.btn.ghost{background:rgba(20,20,18,.75);color:#e9e4d4;border:1px solid #555}
+.btn:hover{filter:brightness(1.15)} .btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.phones{margin-top:18px;font-size:14px;opacity:.75;text-align:left}
+.credit{position:fixed;left:16px;bottom:12px;font-size:13px;opacity:.55} /* v3: bottom-left, clear of itch's fullscreen button (bottom-right) */
+.panel{background:rgba(8,8,7,.92);border:1px solid #3a382f;padding:24px 28px;max-width:560px;width:100%;text-align:left;box-shadow:0 0 40px #000}
+.panel h2{margin:0 0 14px;color:#f2c613;letter-spacing:.12em}
+.panel p,.panel li{font-size:17px;line-height:1.45;opacity:.92}
+.row{display:flex;align-items:center;justify-content:space-between;margin:14px 0;font-size:18px;gap:16px}
+.row input[type=range]{flex:1;max-width:260px;accent-color:#f2c613}
+.row input[type=checkbox]{width:24px;height:24px;accent-color:#f2c613}
+#hud{pointer-events:none;z-index:3}
+#cross{position:fixed;left:50%;top:50%;width:4px;height:4px;margin:-2px;background:rgba(255,255,255,.55);border-radius:50%}
+#sub{position:fixed;left:50%;bottom:9vh;transform:translateX(-50%);max-width:min(86vw,760px);padding:8px 14px;background:rgba(0,0,0,.72);font-size:min(4.6vw,21px);line-height:1.35;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center}
+#sub.show{opacity:1} #sub.creepy{color:#ff5544;font-style:italic;letter-spacing:.03em}
+#loopflash{position:fixed;left:22px;top:18px;font-weight:900;letter-spacing:.2em;color:#f2c613;opacity:0;font-size:18px;text-shadow:2px 2px 0 #000}
+#loopflash.show{animation:lf 3.2s ease forwards}
+@keyframes lf{0%{opacity:0}15%{opacity:1}70%{opacity:1}100%{opacity:0}}
+#hint{position:fixed;left:50%;top:16vh;transform:translateX(-50%);font-size:16px;opacity:0;transition:opacity .6s;background:rgba(0,0,0,.6);padding:6px 12px;white-space:nowrap}
+#hint.show{opacity:.9}
+#pauseBtn{position:fixed;right:14px;top:12px;width:46px;height:46px;border-radius:50%;border:1px solid #666;background:rgba(0,0,0,.5);color:#ddd;font-size:18px;pointer-events:auto;display:none;z-index:5}
+body.touch #pauseBtn{display:block}
+#tpBtn{position:fixed;right:70px;top:12px;width:46px;height:46px;border-radius:50%;border:1px solid #666;background:rgba(0,0,0,.5);color:#ddd;font-size:19px;pointer-events:auto;display:none;z-index:5}
+body.touch #tpBtn{display:block} body.touch.tpv #tpBtn{border-color:#f2c613}
+#pauseGoal b{color:#f2c613;letter-spacing:.12em}
+#touch{position:fixed;inset:0;display:none;z-index:2}
+#joy{position:fixed;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);display:none;pointer-events:none}
+#joyk{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(242,198,19,.45)}
+#endtext{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:min(6vw,34px);opacity:0;transition:opacity 1s;pointer-events:none;text-shadow:2px 2px 6px #000;padding:0 6vw}
+#endtext.show{opacity:1} #endtext.time{color:#222;font-weight:900;letter-spacing:.3em;font-size:min(9vw,54px);text-shadow:none}
+#endtext.big{font-size:min(10vw,64px);font-weight:900;color:#ff3a26;letter-spacing:.05em}
+#end{background:#000}
+#endcard{opacity:0;transition:opacity 1.2s} #endcard.on{opacity:1}
+/* v3.7 bug fix: on a short landscape phone (765x250) the end card was taller than the screen (logo and Title button cut off) */
+@media (max-height:430px){#end{overflow-y:auto}#endcard{max-height:100vh;padding:6px 0;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:26px;row-gap:2px;align-items:center;max-width:94vw;margin:0 auto}#endcard .logo{font-size:34px!important;margin:0;grid-column:1;grid-row:1}#endSub{margin-top:0!important;font-size:14px!important;grid-column:1;grid-row:2}#stats{margin:2px 0!important;font-size:12.5px!important;line-height:1.32!important;grid-column:1;grid-row:3}#stats *{font-size:12.5px!important;line-height:1.32!important;margin:0!important}#endcard .btn{display:block!important;margin:3px 0!important;min-width:150px!important;padding:9px 16px!important;min-height:44px;grid-column:2}#btnAgain{grid-row:1}#btnEndChapters{grid-row:2}#btnEndTitle{grid-row:3;align-self:start}#endcard>div:nth-last-child(2){margin-top:4px!important;font-size:11px!important;grid-column:1/-1;grid-row:4}#endcard>div:last-child{margin-top:1px!important;font-size:9px!important;line-height:1.2!important;grid-column:1/-1;grid-row:5}}
+#stats{margin:16px 0 22px;font-size:18px;letter-spacing:.08em;opacity:.85}
+#dbg,#fps{position:fixed;left:8px;bottom:6px;font:12px monospace;color:#0f0;opacity:.8;pointer-events:none}
+#fps{left:auto;right:8px}
+#rotate{display:none}
+@media (max-height:520px){.btn{min-width:200px;padding:9px 18px;font-size:16px;margin:5px 0}.tag{margin:8px 0 12px;font-size:15px}.phones{margin-top:10px;font-size:12px}.panel{padding:14px 20px;max-height:94vh;overflow:auto}.panel p,.panel li{font-size:14px;line-height:1.35}.row{margin:8px 0;font-size:16px}}
+@media (orientation:portrait) and (pointer:coarse){#rotate{display:flex;position:fixed;inset:0;background:#000;z-index:20;align-items:center;justify-content:center;text-align:center;font-size:20px;padding:30px}}
+
+#grain,#vig,#scan{display:none} body.lowq #grain,body.lowq #vig{display:block} body.touch.lowq #grain{mix-blend-mode:normal;opacity:.045}
+#chcard{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 1.2s;z-index:6;text-align:center;background:radial-gradient(ellipse at center,rgba(0,0,0,.75),rgba(0,0,0,.95))}
+#chcard.on{opacity:1}
+.chn{letter-spacing:.5em;font-size:min(3.4vw,16px);color:#f2c613;opacity:.9}
+.cht{font-weight:900;font-size:min(11vw,84px,14vh);letter-spacing:.05em;color:#e9e4d4;text-shadow:0 0 30px rgba(255,80,40,.25);margin:8px 0 0}
+.chh{font-family:"Noto Sans Devanagari",sans-serif;font-weight:700;font-size:min(6vw,40px);color:#c9c1a8;opacity:.85}
+.chl{margin-top:18px;font-size:min(4.2vw,19px);font-style:italic;opacity:.8;max-width:80vw}
+@font-face{font-family:"Noto Sans Devanagari";font-weight:700;src:url(fonts/noto-deva-devanagari.woff2) format("woff2");unicode-range:U+0900-097F,U+1CD0-1CF9,U+200C-200D,U+20A8,U+20B9,U+25CC,U+A830-A839,U+A8E0-A8FF}
+#note{background:rgba(0,0,0,.82);z-index:7;cursor:pointer}
+.notewrap{display:flex;gap:22px;align-items:stretch;flex-wrap:wrap;justify-content:center;max-width:900px}
+.tk{background:#efe6c8;color:#222;width:300px;padding:0 0 14px;font-family:"Courier New",monospace;box-shadow:0 0 30px #000;transform:rotate(-2deg);border-left:6px dotted #bbb}
+.tkh{background:#c0281c;color:#fff;font:700 15px "Noto Sans Devanagari",sans-serif;padding:7px 10px;letter-spacing:.05em}
+.tkr{padding:6px 14px 0;font-size:16px}.tkn{padding:10px 14px 0;font-size:12px;opacity:.6}
+#noteBack{background:#e8e0cc;color:#1d1a16;width:min(380px,86vw);padding:20px 22px;font:italic 18px/1.45 Georgia,serif;box-shadow:0 0 30px #000;transform:rotate(1.5deg);text-align:left}
+/* v3.0.2: on short landscape phones the two cards sat stacked and ran off the top and bottom of the screen; keep them side by side */
+@media (max-height:500px) and (orientation:landscape){.notewrap{flex-wrap:nowrap;gap:12px;max-width:97vw;align-items:center}.notewrap .tk{width:min(300px,44vw);max-height:80vh;overflow:auto}#noteBack{width:min(380px,47vw);max-height:80vh;overflow:auto;padding:12px 14px;font-size:14px}#noteNum{margin-bottom:4px}}
+#noteNum{color:#f2c613;letter-spacing:.3em;font-size:14px;margin-bottom:14px}
+.notehint{margin-top:16px;font-size:13px;opacity:.6}
+#paper{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 1.2s;pointer-events:none;z-index:5;background:rgba(0,0,0,.6)}
+#paper.on{opacity:1}
+.np{background:#e6dfcc;color:#1b1914;width:min(560px,88vw);padding:18px 24px 22px;font-family:Georgia,serif;box-shadow:0 0 50px #000;transform:rotate(-1.5deg);filter:sepia(.35) contrast(1.05)}
+.np .mast{font:900 min(8vw,40px)/1 "Times New Roman",serif;text-align:center;border-bottom:3px double #222;padding-bottom:6px;letter-spacing:.04em}
+.np .date{font-size:12px;text-align:center;border-bottom:1px solid #222;padding:4px 0;letter-spacing:.2em}
+.np h3{font:900 min(5.6vw,27px)/1.1 Georgia,serif;margin:12px 0 8px}
+.np p{font-size:min(3.6vw,15px);line-height:1.4;margin:0;column-count:2;column-gap:18px;text-align:justify}
+.np .ph{float:right;width:120px;height:120px;margin:0 0 6px 12px;background:radial-gradient(circle at 50% 38%,#222 18%,transparent 19%),radial-gradient(ellipse at 50% 100%,#8a1a1a 34%,#222 35%,transparent 58%),#9a958a;filter:grayscale(.4)}
+select{font:inherit;font-size:16px;background:#111;color:#eee;border:1px solid #555;padding:4px 8px}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:30;background:#000;transition:opacity .8s}
+#loading.off{opacity:0;pointer-events:none}
+.lbar{width:min(320px,62vw);height:3px;margin-top:18px;background:rgba(255,255,255,.12);overflow:hidden;border-radius:2px}
+.lbar i{display:block;height:100%;background:#f2c613;transform-origin:0 50%;transform:scaleX(0);transition:transform .25s linear}
+#loadpct{margin-top:8px;font-size:11px;opacity:.45;letter-spacing:.2em;font-variant-numeric:tabular-nums}
+#chload{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:31;background:#000;color:#ddd;text-align:center;font-size:13px;letter-spacing:.25em}
+#chload.on{display:flex}
+#loadmsg{margin-top:12px;opacity:.7;letter-spacing:.2em;font-size:13px}
+.chsel{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.chsel .btn{min-width:180px}
+.btn:disabled{opacity:.3;cursor:default}
+body.nohud #hud,body.nohud #goal,body.nohud #tpBtn,body.nohud #sub,body.nohud #dbg,body.nohud #fps,body.nohud #pauseBtn{display:none!important}
+#ticketsTitle{margin-top:6px;font-size:13px;opacity:.75;text-align:left}
+/* subtitles only over gameplay / cutscenes, never over menus */
+body[data-screen=pause] #sub,body[data-screen=settings] #sub,body[data-screen=title] #sub,body[data-screen=how] #sub,body[data-screen=chapters] #sub,body[data-screen=note] #sub,body[data-screen=end] #sub{display:none}
+body[data-screen=pause] #hint,body[data-screen=settings] #hint{display:none}
+
+/* v3.4: a long panel (How to play on a 1280x720 window) scrolls instead of running off the top and bottom */
+.panel{max-height:calc(100vh - 40px);overflow:auto}
+/* v3.4: title layout wrappers are invisible on normal screens (same order as before: logo, tag, buttons, headphones, tickets) */
+.tleft,.tbtns{display:contents} #title .logo{order:0} #title .tag{order:1} #title .btn{order:2} #title .phones{order:3} #title #ticketsTitle{order:4}
+/* v3.4: landscape phones (Android Chrome with its bars leaves ~250 px; full screen ~360-415): logo + text on the left, buttons on the right */
+@media (max-height:430px) and (orientation:landscape){
+#title.screen.on{flex-direction:row;align-items:center;justify-content:flex-start;gap:5vw;padding:6px 5vw 26px max(5vw,calc(env(safe-area-inset-left,0px) + 12px))}
+#title .tleft,#title .tbtns{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+#title .tleft{max-width:46vw} #title .btn{min-width:180px;padding:9px 14px;font-size:14px;margin:4px 0;white-space:nowrap}
+#title .logo{font-size:min(8.5vw,15vh)} #title .tag{margin:6px 0 4px;font-size:13px} #title .phones{margin-top:6px;font-size:11px} #title #ticketsTitle{font-size:11px;margin-top:4px}
+.credit{bottom:6px;font-size:11px;left:max(16px,calc(env(safe-area-inset-left,0px) + 12px))}
+}
+
+/* v3.7 the Archive */
+.btn.hasnew{border-color:#f2c613;box-shadow:4px 4px 0 #000,inset 0 0 0 1px #f2c613}
+.archPanel{max-width:880px;display:flex;flex-direction:column;max-height:calc(100vh - 24px);overflow:hidden;padding:16px 20px}
+.archHead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.archHead h2{margin:0}.archHead #archCount{font-size:15px;opacity:.85;letter-spacing:.08em;white-space:nowrap}
+.archHead .btn{min-width:0;min-height:44px;margin:0 0 0 auto;padding:10px 16px;font-size:15px}
+.archSub{font-size:13px;opacity:.7;margin:6px 0 8px}
+#archTabs{display:flex;gap:6px;flex:1;min-width:0}
+.archTab{flex:1;min-height:46px;min-width:0;background:rgba(30,30,26,.9);color:#e9e4d4;border:1px solid #444;border-radius:2px;font:700 14px/1.15 inherit;font-family:inherit;letter-spacing:.04em;cursor:pointer;padding:5px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.archTab small{display:block;font-weight:400;opacity:.75;font-size:12px}.archTab.on{background:#f2c613;color:#111;border-color:#f2c613}
+#archList{overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;flex:1;min-height:60px;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-content:start;padding-right:4px}
+.archItem{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:8px;min-height:48px;padding:6px 10px;background:rgba(22,22,19,.9);border:1px solid #33312a;border-radius:2px;font-size:14px;line-height:1.25}
+.archItem.found{cursor:pointer;border-color:#5a5440}.archItem.found:hover{border-color:#f2c613}
+.archSil{width:26px;height:26px;border-radius:50%;background:#222;color:#666;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px}
+.archItem.found .archSil{background:#3a2f12;color:#f2c613}
+.archItem.locked .archT{opacity:.45;letter-spacing:.3em}.archNum{font-size:11px;opacity:.45}
+.archT i,.archRT i{font-style:normal;font-size:10px;letter-spacing:.14em;color:#ff7a5a;margin-left:4px}.archT b{font-size:10px;letter-spacing:.12em;color:#111;background:#f2c613;padding:1px 4px;margin-left:4px}
+#archRead{display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;flex:1;min-height:60px;padding:2px 4px}
+.archBackList{min-height:44px;background:none;border:1px solid #5a5440;color:#f2c613;font:700 14px inherit;font-family:inherit;letter-spacing:.08em;padding:6px 14px;cursor:pointer;border-radius:2px}
+.archRH{display:flex;align-items:center;gap:10px;margin:6px 0 2px}.archBackList{min-width:48px;font-size:20px!important}.archRT{font-weight:900;font-size:19px;color:#f2c613;letter-spacing:.04em}.archRM{font-size:12px;opacity:.6;letter-spacing:.12em;margin-bottom:8px}
+.archNote{font-family:"Courier New",monospace;font-size:17px;line-height:1.55;color:#efe6c8;background:rgba(239,230,200,.05);border-left:3px solid #5a5440;padding:8px 12px}
+#archToast{position:fixed;left:50%;top:12vh;transform:translateX(-50%) translateY(-8px);background:rgba(10,10,8,.88);border:1px solid #f2c613;color:#f2c613;padding:7px 14px;font-size:14px;letter-spacing:.12em;opacity:0;transition:opacity .5s,transform .5s;pointer-events:none;z-index:8;white-space:nowrap}
+#archToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-height:430px){.archPanel{padding:6px 10px;max-height:calc(100vh - 8px)}.archSub{display:none}.archHead{gap:8px;flex-wrap:nowrap;margin-bottom:6px}.archHead h2{font-size:16px;letter-spacing:.08em}.archHead #archCount{font-size:12px}
+ .archHead .btn{padding:8px 12px;font-size:13px;min-height:44px}.archTab{min-height:44px;font-size:11px;padding:3px 5px}.archTab small{font-size:11px}.archItem{min-height:44px;font-size:13px;padding:4px 8px}
+ .archRT{font-size:15px}.archRH{margin:2px 0 0}.archRM{margin-bottom:4px}.archNote{font-size:14px;line-height:1.45;padding:6px 10px}#archToast{top:8px;font-size:12px}.archBackList{min-height:44px;font-size:13px}}
+@media (max-width:560px){#archList{grid-template-columns:1fr}}
+@media (max-height:300px) and (orientation:landscape){#title .tbtns{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:8px;align-content:center;max-width:100%}#title .tbtns .btn{min-width:0!important;width:100%;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:8px!important;padding-right:8px!important}#title #btnContinue{grid-column:1/-1}}
+@media (max-height:300px) and (max-width:700px) and (orientation:landscape){#title .tbtns .btn{font-size:12px!important;padding-left:6px!important;padding-right:6px!important;letter-spacing:.04em}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<canvas id="grain" width="192" height="108"></canvas>
+<div id="scan"></div><div id="vig"></div>
+
+<div id="touch"></div>
+<div id="joy"><div id="joyk"></div></div>
+
+<div class="screen" id="hud">
+  <div id="cross"></div><div id="loopflash"></div><div id="hint"></div>
+  <button id="pauseBtn" aria-label="Pause">II</button>
+  <button id="tpBtn" aria-label="Switch view">🎥</button>
+</div>
+<div id="sub"></div>
+<div id="endtext"></div>
+<div id="chcard"></div>
+<div id="chload"><div>NEXT TRAIN ARRIVING…</div><div class="lbar"><i id="chloadbar"></i></div></div>
+
+<div class="screen" id="title">
+  <div class="tleft">
+  <h1 class="logo">PLATFORM 0<span>LAST LOCAL</span></h1>
+  <div class="tag">11:58 PM. Shunya Road. Arjun just wants to get home to Maa.<br>Spot what's wrong. Turn back. Three chapters. One way out.</div>
+  <div class="phones">🎧 Headphones recommended · about 25 minutes · contains jump scares</div>
+  <div id="ticketsTitle"></div>
+  </div><div class="tbtns">
+  <button class="btn" id="btnContinue" style="display:none">Continue</button>
+  <button class="btn" id="btnPlay">New game</button>
+  <button class="btn ghost" id="btnChapters" style="display:none">Chapters</button>
+  <button class="btn ghost" id="btnArchive">📖 Archive</button>
+  <button class="btn ghost" id="btnHow">How to play</button>
+  <button class="btn ghost" id="btnSettings">Settings</button>
+  </div>
+  <div class="credit" id="credit">a game by Sonujeet · v3.7</div>
+</div>
+
+<div class="screen" id="chapters">
+  <div class="panel" style="text-align:center;max-width:720px">
+    <h2>CHAPTERS</h2>
+    <div class="chsel">
+      <button class="btn" id="chBtn0">1 · Platform 0</button>
+      <button class="btn" id="chBtn1">2 · The Subway</button>
+      <button class="btn" id="chBtn2">3 · The Last Local</button>
+    </div>
+    <p id="chStats" style="font-size:15px;opacity:.85;margin-top:12px"></p>
+    <p style="font-size:14px;opacity:.7;margin-top:6px">Chapters unlock as you reach them. Lost tickets and diary pages you find are kept.</p>
+    <button class="btn ghost" id="btnChBack" style="margin:8px auto">Back</button>
+  </div>
+</div>
+
+<div class="screen" id="how">
+  <div class="panel">
+    <h2>HOW TO PLAY</h2>
+    <p>You're stuck in a loop. Every time you walk through, the place repeats.</p>
+    <ul>
+      <li>If <b>something is wrong</b> (an anomaly), <b>turn back</b> the way you came.</li>
+      <li>If <b>nothing is wrong</b>, keep going forward.</li>
+      <li>Right call: the number goes up. Wrong call: back to <b>0</b>.</li>
+      <li>Reach <b>8</b> to escape the chapter. There are three.</li>
+      <li>Your <b>goal</b> for each chapter is at the top of the screen (and in the pause menu).</li>
+      <li>Pick up the 8 <b>lost tickets</b>: Arjun's notes on what happened that night.</li>
+      <li>Some nights the lights die: grab the <b>torch</b> from the station master's room. Batteries run out.</li>
+      <li>If a <b>phone rings</b>, you can answer it. It might help you. It might not.</li>
+      <li>She only moves when you <b>aren't looking</b> at her. If she catches you, you lose <b>health</b> (the red bar, top left); it slowly comes back when things are quiet. At 0 you wake back at the start of the chapter (the count goes back to 0), but everything you found is kept.</li>
+      <li><b>Torch flare</b> (phone: <b>🔆</b>, PC: <b>Q</b> or right-click): a blinding burst that stuns her for a few seconds and throws her back. Costs battery and needs a few seconds to recharge.</li>
+      <li><b>Something is watching:</b> after your first turn-back, someone with a lamp stands at the far end of Platform 0. It is always there now, and it is <b>never an anomaly</b>, there or not. Each time you turn back, it is a little closer.</li>
+      <li><b>It remembers you:</b> where you last fell, there's a chalk outline (not an anomaly). Settings → Forget me erases it.</li>
+      <li><b>📖 Archive:</b> every anomaly you turn back on unlocks a note about what happened at Shunya Road.</li>
+      <li><b>The stranger:</b> from the third loop on you may hear your own footsteps echo… then see someone who looks exactly like you, copying you. Don't walk at him. When he snaps, he runs. One catch takes a third of your health.</li>
+      <li><b>Fight back:</b> the flare dissolves him. Pick up a <b>steel rod</b> or <b>broken umbrella</b> and swing it (PC: <b>R</b> or left-click, phone: <b>⚔️</b>): 3 hits and he's gone, and it breaks after 5 swings. Up close you can <b>shove</b> him away (PC: <b>Space</b>, phone: <b>✋</b>). Your hands go straight through <b>her</b>.</li>
+      <li><b>Hide</b> under a bench, in the waiting-room corner, behind the subway shop or the box, or between train seats (USE). If he saw you go in, he drags you out.</li>
+      <li>In the coach the <b>TC</b> checks tickets: <i>“tikat dikhao…”</i> Show him a lost ticket and he moves on. Without one…</li>
+      <li>When you hear the horn, <b>hide</b>: the waiting room, or tight behind a pillar.</li>
+      <li>6 torn <b>diary pages</b> (Maa's) are hidden across the chapters, some only in torchlight. Her 6 <b>lost things</b> turn up for Lost &amp; Found, and <b>Room 0</b> is locked with a code.</li>
+      <li><b>3 endings:</b> get through all three chapters; find every diary page for <b>Maa</b>; pages, her things and Room 0 for <b>The 0217</b>.</li>
+      <li>Press <b>V</b> (phone: <b>🎥</b>) to switch between first- and third-person view.</li>
+    </ul>
+    <p><b>PC:</b> WASD / arrows to walk, mouse to look, Shift to run, <b>E</b> to use / pick up, <b>F</b> torch, <b>Q</b> / right-click torch flare, <b>R</b> / left-click swing, <b>Space</b> shove, Esc to pause.<br><b>Phone:</b> left thumb to walk (push far to run), right thumb to look, <b>USE</b>, <b>🔦</b> torch and <b>🔆</b> flare buttons on the right, plus <b>⚔️</b> swing and <b>✋</b> shove when you need them (holding something: drag to turn it, or USE). Play in landscape.<br>Progress is saved at the start of each chapter.</p>
+    <button class="btn" id="btnHowBack">Back</button>
+  </div>
+</div>
+
+<div class="screen" id="archive">
+  <div class="panel archPanel">
+    <div class="archHead"><h2>ARCHIVE</h2><span id="archCount"></span><div id="archTabs"></div><button class="btn ghost" id="btnArchBack">Back</button></div>
+    <div class="archSub">Every anomaly you turn back on is kept here, with what the station remembers about it.</div>
+    <div id="archList"></div>
+    <div id="archRead"></div>
+  </div>
+</div>
+<div id="archToast"></div>
+
+<div class="screen" id="settings">
+  <div class="panel">
+    <h2>SETTINGS</h2>
+    <div class="row">Graphics <span><select id="quality"><option value="auto">Auto</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="ultra">Ultra</option></select> <small id="qnow" style="opacity:.6"></small></span></div>
+    <div class="row">Brightness <input type="range" id="bright" min="0.6" max="1.8" step="0.05"></div>
+    <div class="row">Look sensitivity <input type="range" id="sens" min="0.3" max="2.5" step="0.05"></div>
+    <div class="row">Volume <input type="range" id="vol" min="0" max="1" step="0.05"></div>
+    <div class="row">Subtitles <input type="checkbox" id="subs"></div>
+    <div class="row">Retro pixels <input type="checkbox" id="retro"></div>
+    <div class="row">Invert look Y <input type="checkbox" id="invert"></div>
+    <div class="row">Health bar <small style="opacity:.6">(off = classic: a catch sends you back to 0)</small> <input type="checkbox" id="hpon"></div>
+    <div class="row">Third-person view <small style="opacity:.6">(V / 🎥)</small> <input type="checkbox" id="tpview"></div>
+    <div class="row">Story scenes <select id="storymode"><option value="new">New only</option><option value="all">Always</option><option value="off">Off</option></select></div>
+    <div class="row">It remembers you <small style="opacity:.6">(the chalk outline where you last fell)</small> <button class="btn ghost" id="btnForget" style="min-width:0;margin:0;padding:8px 12px;font-size:14px">Forget me</button></div>
+    <button class="btn" id="btnSetBack">Back</button>
+  </div>
+</div>
+
+<div class="screen" id="pause">
+  <div class="panel" style="text-align:center">
+    <h2>PAUSED</h2>
+    <div id="pauseStats" style="opacity:.75;font-size:14px;margin:-4px 0 6px"></div>
+    <div id="pauseGoal" style="font-size:14px;margin:2px auto 6px;max-width:560px;color:#f2ead6"></div>
+    <div id="pauseLost"></div>
+    <button class="btn ghost" id="btnPauseView" style="margin:6px auto">🎥 View</button>
+    <button class="btn" id="btnResume" style="margin:8px auto">Resume</button>
+    <button class="btn ghost" id="btnPauseArchive" style="margin:8px auto">📖 Archive</button>
+    <button class="btn ghost" id="btnPauseSettings" style="margin:8px auto">Settings</button>
+    <button class="btn ghost" id="btnQuit" style="margin:8px auto">Quit to title</button>
+  </div>
+</div>
+
+<div class="screen" id="note">
+  <div id="noteNum"></div>
+  <div class="notewrap"><div id="noteFront"></div><div id="noteBack"></div></div>
+  <div class="notehint">tap / click / E to continue</div>
+</div>
+
+<div id="paper"><div class="np"><div class="mast">THE DAILY LOCAL</div><div class="date">MUMBAI · MONDAY, 31 OCTOBER 2016 · ₹3</div>
+<h3>Commuter found on disused "Platform 0" at Shunya Road</h3>
+<p><span class="ph"></span>A young commuter was struck by a passing goods train late on Sunday night on the old Platform 0 at Shunya Road station, which railway officials say has been closed to passengers for years. He was wearing headphones and carrying a red backpack. Witnesses said he had been waiting for the 11:58 slow local, which was cancelled that night. A chai vendor told police the young man "kept walking up and down the platform, as if he had lost something." His ticket was found on a bench. Railway police have appealed to anyone who can identify him. Officials say the platform will be sealed. Regular commuters say they still see someone there, every night, a little before midnight.</p></div></div>
+
+<div class="screen" id="end">
+  <div id="endcard">
+    <h1 class="logo" style="text-align:center">PLATFORM 0</h1>
+    <div id="endSub" style="margin-top:14px;font-size:20px;letter-spacing:.2em">SEE YOU TOMORROW</div>
+    <div id="stats"></div>
+    <button class="btn" id="btnAgain" style="margin:8px auto">Ride again</button>
+    <button class="btn ghost" id="btnEndChapters" style="margin:8px auto">Chapters</button>
+    <button class="btn ghost" id="btnEndTitle" style="margin:8px auto">Title</button>
+    <div style="margin-top:16px;opacity:.6;font-size:14px">a game by Sonujeet</div><div style="margin-top:6px;opacity:.45;font-size:11px;line-height:1.4">Textures, night sky &amp; props: Poly Haven (CC0) · People &amp; animations: Microsoft Rocketbox (MIT) · Font: Noto Sans Devanagari (OFL)</div>
+  </div>
+</div>
+
+<div id="fade"></div>
+<div id="loading"><h1 class="logo" style="font-size:min(10vw,64px)">PLATFORM 0</h1><div id="loadmsg">Loading…</div><div class="lbar"><i id="loadbar"></i></div><div id="loadpct">0%</div></div>
+<div id="rotate">Turn your phone sideways to play 📱↻</div>
+<div id="dbg"></div><div id="fps"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
